@@ -1,20 +1,5 @@
 # Trade Performance Analyzer
 
-
-
-[![YouTube Demo](https://img.shields.io/badge/YouTube-Demo-red?logo=youtube&logoColor=white&style=for-the-badge)](#video-demo)
-[![Quickstart](https://img.shields.io/badge/%E2%9A%A1-Quickstart-10b981?style=for-the-badge)](#quickstart)
-[![Features](https://img.shields.io/badge/%E2%9C%A8-Features-3b82f6?style=for-the-badge)](#features)
-[![Code](https://img.shields.io/badge/%F0%9F%92%BB-Code-a855f7?style=for-the-badge)](#project-structure)
-
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=gold)
-![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)
-[![Dependencies](https://img.shields.io/badge/dependencies-pandas%20%7C%20plotly%20%7C%20jinja2%20%7C%20bs4-success)](./requirements.txt)
-![Input](https://img.shields.io/badge/input-CSV%20%2F%20HTML-orange)
-![Output](https://img.shields.io/badge/output-standalone%20HTML-important)
-
----
-
 ## Video Demo
 
 > 🎥 Link coming soon — drop the YouTube / Google Drive URL here.
@@ -30,21 +15,17 @@
   - [2. Generate a report from your own file](#2-generate-a-report-from-your-own-file)
   - [3. Try it on the sample data first](#3-try-it-on-the-sample-data-first)
 - [Command line options](#command-line-options)
-- [Example reports you'll get](#example-reports-youll-get)
 - [Supported platforms & file formats](#supported-platforms--file-formats)
 - [What the report includes](#what-the-report-includes)
-- [Project structure](#project-structure)
+- [Project structure and what each file does](#project-structure-and-what-each-file-does)
 - [How the pipeline works](#how-the-pipeline-works)
 - [Design decisions](#design-decisions)
-- [Troubleshooting](#troubleshooting)
-- [Roadmap](#roadmap)
-- [License](#license)
 
 ---
 
 ## What problem it solves
 
-Most traders have a folder full of raw CSV or HTML exports, plus a bunch of hand-maintained spreadsheets that go stale within a week. To answer even basic questions  _“What's my actual win rate after fees?”_, _“Which sessions really work for me?”_, _“Is setup A really worth the effort?”_ — you end up copy-pasting columns, reformatting timestamps, and second-guessing the math every time.
+Most traders have a folder full of raw CSV or HTML exports, plus a bunch of hand-maintained spreadsheets that go stale within a week. To answer even basic questions — "What's my actual win rate after fees?", "Which sessions really work for me?", "Is setup A really worth the effort?" — you end up copy-pasting columns, reformatting timestamps, and second-guessing the math every time.
 
 **Trade Performance Analyzer** takes that raw export and turns it into a polished, browser-ready report in a single command. Zero spreadsheets, zero manual formulas, zero internet required once the report is generated.
 
@@ -110,10 +91,12 @@ python analyzer.py `
   --no-open
 ```
 
+---
+
 ## Supported platforms & file formats
 
 - **CSV or HTML** export
-- Columns auto-detected, so exact header names don't have to match
+- Columns are auto-detected, so exact header names don't have to match
 - Recognized aliases include:
   - `Profit` / `PnL` / `P&L` / `Realized PnL` / `Result`
   - `Type` / `Side` / `Direction` + `buy`/`sell`/`long`/`short`
@@ -149,7 +132,7 @@ Then the breakdowns:
 
 ---
 
-## Project structure
+## Project structure and what each file does
 
 ```text
 Week-10/Final-Project/
@@ -171,6 +154,20 @@ Week-10/Final-Project/
         ├── report_template.html
         └── style.css
 ```
+
+The project is organized into a few clearly separated files, each handling one part of the process.
+
+**`analyzer.py`** is the entry point  the file that actually gets run. It reads the command-line options, calls the parser, then the statistics calculator, then the report builder, in that order, and prints a short summary to the terminal once done. It also handles errors gracefully: if a file can't be read properly, it prints a plain, understandable message instead of crashing with a raw Python error.
+
+**`trade_analyzer/parser.py`** is responsible for turning a messy CSV or HTML export into a clean, consistent table, regardless of which platform it came from. Different platforms label the same data differently — one might call a column "Profit," another might call the same value "Realized PnL" or "P&L." This file keeps a list of alternate names for each piece of data it needs (open time, symbol, direction, profit, and so on) and matches whichever version actually appears in the file. It also standardizes different ways of writing "buy" or "sell" (like "long," "b," or "buy") into one consistent value. For HTML exports specifically, MT5-style statements often contain several different tables on the same page  an account summary, an orders table, and a deals table — so the parser scans through all of them and identifies the one that actually looks like a trade history.
+
+**`trade_analyzer/metrics.py`** takes the cleaned table and performs the actual calculations: win rate, profit factor, expectancy, drawdown, and the various breakdowns by session, symbol, day, month, and setup. This file has no knowledge of how anything will eventually be displayed  it simply returns numbers and small tables. Keeping it separate from the charting and report-building code was a deliberate choice, so the correctness of the calculations could be tested independently, without needing to look at a rendered web page every time a check was needed.
+
+**`trade_analyzer/charts.py`** builds each individual chart — the equity curve, the win-rate bar charts, and the monthly performance chart  using the Plotly library. Every chart shares the same color palette and font choices, so the finished report looks like one cohesive, designed piece rather than a collection of default-looking charts stitched together.
+
+**`trade_analyzer/report.py`** brings everything together: it takes the calculated numbers from `metrics.py` and the charts from `charts.py`, fills them into the HTML template, and saves the finished report file. The actual appearance of the report  the layout, the metric cards at the top, the tables, and the dark terminal-style color scheme  is controlled by `trade_analyzer/templates/report_template.html` and `style.css`.
+
+Finally, **`sample_data/`** contains example trade files so the tool can be tested and demonstrated without needing a real trading account. Two separate sample generators are included on purpose: one that mimics MT5's typical export format, and a second (`generate_other_platform_sample.py`) that deliberately uses different column names and different wording for buy and sell (such as "long"/"short" instead of "buy"/"sell"), to prove that the parser genuinely works across different platforms rather than being hardcoded to a single one.
 
 ---
 
@@ -202,7 +199,3 @@ A few choices worth calling out:
 2. **Loose column matching** — The first parser version only accepted MT5's exact headers. Real exports vary wildly, so it now matches many aliases for the same underlying field and normalizes trade directions like `long`/`short`/`b`/`s` into canonical `buy`/`sell`.
 3. **Offline HTML** — The first version loaded Plotly from a CDN, which meant the report broke offline. The library code is now embedded into the HTML file itself, so a report can be opened or emailed without any internet.
 4. **Separate metrics from visuals** — `metrics.py` returns pure numbers and tables, `charts.py` returns chart objects, `report.py` arranges them. That makes it easy to verify calculations without staring at a rendered page.
-
----
-
-

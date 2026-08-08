@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trade Performance Report{{ ' — ' + symbol_range if symbol_range else '' }}</title>
+<script>{{ plotly_js | safe }}</script>
+<style>{{ css }}</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <p class="hero-eyebrow">Trade performance report &middot; {{ overview.start_date }} to {{ overview.end_date }}</p>
+    <h1 class="hero-headline">
+      <span class="{{ 'amount-positive' if overview.net_profit >= 0 else 'amount-negative' }}">
+        {{ '+' if overview.net_profit >= 0 else '' }}{{ '%.2f'|format(overview.net_profit) }}
+      </span>
+    </h1>
+    <p class="hero-meta">{{ overview.total_trades }} closed trades &middot; net profit/loss across the period</p>
+  </div>
+
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <p class="metric-label">Win rate</p>
+      <p class="metric-value {{ 'positive' if overview.win_rate >= 50 else 'negative' }}">{{ overview.win_rate }}%</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Profit factor</p>
+      <p class="metric-value neutral">{{ overview.profit_factor if overview.profit_factor is not none else '∞' }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Expectancy / trade</p>
+      <p class="metric-value {{ 'positive' if overview.expectancy >= 0 else 'negative' }}">{{ '%.2f'|format(overview.expectancy) }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Avg R:R</p>
+      <p class="metric-value neutral">{{ overview.avg_rr if overview.avg_rr is not none else '∞' }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Max drawdown</p>
+      <p class="metric-value negative">{{ '%.2f'|format(drawdown.max_drawdown) }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Longest win streak</p>
+      <p class="metric-value positive">{{ streaks.longest_win_streak }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Longest loss streak</p>
+      <p class="metric-value negative">{{ streaks.longest_loss_streak }}</p>
+    </div>
+    <div class="metric-card">
+      <p class="metric-label">Avg win / avg loss</p>
+      <p class="metric-value neutral">{{ '%.0f'|format(overview.avg_win) }} / {{ '%.0f'|format(overview.avg_loss) }}</p>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Equity curve</h2>
+    <p class="section-sub">Cumulative net P/L across every closed trade, in order</p>
+    <div class="panel">{{ equity_chart | safe }}</div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Performance by session</h2>
+    <p class="section-sub">Win rate by trading session, derived from each trade's open time</p>
+    <div class="two-col">
+      <div class="panel">{{ session_winrate_chart | safe }}</div>
+      <div class="panel">{{ session_profit_chart | safe }}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Performance by instrument</h2>
+    <p class="section-sub">Where the edge is actually coming from, by symbol</p>
+    <div class="two-col">
+      <div class="panel">{{ symbol_winrate_chart | safe }}</div>
+      <div class="panel">{{ symbol_profit_chart | safe }}</div>
+    </div>
+  </div>
+
+  {% if setup_table %}
+  <div class="section">
+    <h2 class="section-title">Performance by setup</h2>
+    <p class="section-sub">Grouped from the comment/tag on each trade (e.g. FVG entry, OB retest, MSS confirm)</p>
+    <div class="panel">
+      <table class="data-table">
+        <tr><th>Setup</th><th>Trades</th><th>Win rate</th><th>Net P/L</th></tr>
+        {% for row in setup_table %}
+        <tr>
+          <td><span class="tag-pill">{{ row.setup }}</span></td>
+          <td>{{ row.trades }}</td>
+          <td>{{ row.win_rate }}%</td>
+          <td class="{{ 'win-text' if row.net_profit >= 0 else 'loss-text' }}">{{ '%.2f'|format(row.net_profit) }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="section">
+    <h2 class="section-title">Performance by day of week</h2>
+    <div class="panel">{{ dow_profit_chart | safe }}</div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Monthly performance</h2>
+    <div class="panel">{{ monthly_chart | safe }}</div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">Trade log</h2>
+    <p class="section-sub">Every closed trade included in this report</p>
+    <div class="trade-log-wrap">
+      <table class="data-table">
+        <tr><th>Date</th><th>Symbol</th><th>Type</th><th>Session</th><th>Setup</th><th>Net</th></tr>
+        {% for row in trade_log %}
+        <tr>
+          <td>{{ row.open_time }}</td>
+          <td>{{ row.symbol }}</td>
+          <td>{{ row.type }}</td>
+          <td>{{ row.session }}</td>
+          <td>{{ row.comment }}</td>
+          <td class="{{ 'win-text' if row.is_win else 'loss-text' }}">{{ '%.2f'|format(row.net) }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+
+  <footer>
+    Generated by Trade Performance Analyzer &middot; {{ generated_at }}
+  </footer>
+
+</div>
+</body>
+</html>

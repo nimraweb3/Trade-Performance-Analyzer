@@ -2,8 +2,7 @@
 
 ## Video Demo
 
-> 🎥 Link coming soon — drop the YouTube / Google Drive URL here.
-
+> 🎥 https://youtu.be/LTSglfWG1-E
 ---
 
 ## Table of contents

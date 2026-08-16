@@ -135,7 +135,6 @@ Then the breakdowns:
 ## Project structure and what each file does
 
 ```text
-Week-10/Final-Project/
 ├── analyzer.py                         # CLI entry point
 ├── requirements.txt                    # pandas, plotly, bs4, jinja2, lxml
 ├── sample_data/

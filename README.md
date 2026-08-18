@@ -2,7 +2,7 @@
 
 ## Video Demo
 
-> 🎥 https://youtu.be/LTSglfWG1-E
+
 ---
 
 ## Table of contents

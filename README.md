@@ -1,7 +1,9 @@
+
 # Trade Performance Analyzer
 
 ## Video Demo
 
+https://github.com/user-attachments/assets/c6a46f25-812d-408a-b54c-a706e4de2635
 
 ---
 

@@ -1,5 +1,5 @@
 """
-Trade Performance Analyzer — command-line entry point.
+Trade Performance Analyzer 
 
 Usage:
     python analyzer.py --input path/to/statement.csv
